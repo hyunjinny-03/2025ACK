@@ -1,0 +1,1094 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Card Navi - 카드 추천 시스템</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans KR', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+            animation: fadeInDown 0.8s ease-out;
+        }
+
+        .logo {
+            font-size: 3.5rem;
+            font-weight: 700;
+            color: white;
+            text-shadow: 0 4px 8px rgba(0,0,0,0.3);
+            margin-bottom: 1rem;
+            letter-spacing: -2px;
+        }
+
+        .subtitle {
+            color: rgba(255,255,255,0.9);
+            font-size: 1.2rem;
+            font-weight: 300;
+        }
+
+        /* Main Card */
+        .main-card {
+            background: rgba(255,255,255,0.95);
+            border-radius: 20px;
+            padding: 3rem;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.3);
+            animation: fadeInUp 0.8s ease-out 0.4s both;
+        }
+
+        .section-title {
+            font-size: 1.8rem;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 2rem;
+            text-align: center;
+            position: relative;
+        }
+
+        .section-title::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60px;
+            height: 3px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            border-radius: 2px;
+        }
+
+        /* Selection Grid */
+        .selection-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .selection-item {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 1.5rem;
+            border-radius: 15px;
+            border-left: 4px solid #667eea;
+            transition: all 0.3s ease;
+        }
+
+        .selection-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            border-left-color: #764ba2;
+        }
+
+        .selection-label {
+            font-weight: 600;
+            color: #495057;
+            font-size: 1rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+        }
+
+        .selection-badge {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            margin-left: 0.5rem;
+        }
+
+        /* Custom Select */
+        select {
+            width: 100%;
+            padding: 1rem;
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            color: #2c3e50;
+            background: white;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        select:hover {
+            border-color: #667eea;
+            background: #f8f9ff;
+        }
+
+        select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        /* Search Button */
+        .search-section {
+            text-align: center;
+            margin: 2rem 0;
+        }
+
+        .search-button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 1rem 3rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .search-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .search-button:active {
+            transform: translateY(0);
+        }
+
+        /* Results Section */
+        .dynamic-content {
+            margin-top: 2rem;
+            animation: fadeInUp 0.5s ease-out;
+        }
+
+        .results-card {
+            background: linear-gradient(135deg, #f8f9fa, #ffffff);
+            border-radius: 15px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            border: 1px solid rgba(102, 126, 234, 0.2);
+        }
+
+        .category-title {
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #667eea;
+            display: inline-block;
+        }
+
+        /* Checkbox Styles */
+        .checkbox-group {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 0.8rem;
+            margin-bottom: 2rem;
+        }
+
+        .checkbox-group label {
+            display: flex;
+            align-items: center;
+            padding: 0.8rem;
+            background: white;
+            border-radius: 10px;
+            border: 2px solid #e9ecef;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .checkbox-group label::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(102, 126, 234, 0.1), transparent);
+            transition: left 0.5s;
+        }
+
+        .checkbox-group label:hover::before {
+            left: 100%;
+        }
+
+        .checkbox-group label:hover {
+            border-color: #667eea;
+            background: #f8f9ff;
+            transform: translateY(-2px);
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            margin-right: 0.8rem;
+            accent-color: #667eea;
+            cursor: pointer;
+        }
+
+        .checkbox-group input[type="checkbox"]:checked + span {
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        /* Subcategory Styles */
+        .subcategory-group {
+            background: rgba(102, 126, 234, 0.05);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            border-left: 4px solid #667eea;
+        }
+
+        .subcategory-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #667eea;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+        }
+
+        .subcategory-title::before {
+            content: '📂';
+            margin-right: 0.5rem;
+        }
+
+        .subcategory-items {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 0.5rem;
+        }
+
+        .subcategory-items label {
+            padding: 0.6rem;
+            font-size: 0.9rem;
+        }
+
+        /* Action Button */
+        .action-button {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+            border: none;
+            padding: 0.8rem 2rem;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 1rem 0;
+            box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+        }
+
+        .action-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(40, 167, 69, 0.4);
+        }
+
+        .card-detail-btn {
+            display: inline-flex;         /* 글씨와 아이콘이 있어도 중앙 정렬 */
+            align-items: center;
+            justify-content: center;
+            width: 100px;                 /* 가로 고정 */
+            height: 35px;                 /* 세로 고정 */
+            background: #4CAF50;
+            color: #fff;
+            border-radius: 5px;
+            text-decoration: none;
+            font-size: 0.8rem;
+            font-weight: bold;
+            white-space: nowrap;          /* 줄바꿈 방지 */
+        }
+
+
+
+        /* Animations */
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+            
+            .logo {
+                font-size: 2.5rem;
+            }
+            
+            .main-card {
+                padding: 2rem;
+            }
+            
+            .selection-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .checkbox-group {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Floating particles effect */
+        .particle {
+            position: absolute;
+            background: rgba(255,255,255,0.3);
+            border-radius: 50%;
+            pointer-events: none;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(180deg); }
+        }
+    </style>
+</head>
+<body>
+    <!-- Floating particles -->
+    <div class="particle" style="width: 8px; height: 8px; top: 20%; left: 10%; animation-delay: 0s;"></div>
+    <div class="particle" style="width: 6px; height: 6px; top: 60%; left: 90%; animation-delay: 2s;"></div>
+    <div class="particle" style="width: 10px; height: 10px; top: 80%; left: 20%; animation-delay: 4s;"></div>
+
+    <div class="container">
+        <header class="header">
+            <h1 class="logo">Card Navi</h1>
+            <p class="subtitle">맞춤형 카드 추천 시스템</p>
+        </header>
+
+        <main class="main-card">
+            <h2 class="section-title">지역구, 성별, 연령대 선택 후 검색 버튼을 눌러 주세요</h2>
+            
+            <div class="selection-grid">
+                <div class="selection-item">
+                    <div class="selection-label">
+                        지역구 선택
+                        <span class="selection-badge">🏘️</span>
+                    </div>
+                    <select id="region">
+                        <option value="Gwan">권선구</option>
+                        <option value="Young">영통구</option>
+                        <option value="Jang">장안구</option>
+                        <option value="Pal">팔달구</option>
+                    </select>
+                </div>
+
+                <div class="selection-item">
+                    <div class="selection-label">
+                        성별 선택
+                        <span class="selection-badge">🚻</span>
+                    </div>
+                    <select id="sex">
+                        <option value="M">남성</option>
+                        <option value="F">여성</option>
+                    </select>
+                </div>
+                
+                <div class="selection-item">
+                    <div class="selection-label">
+                        연령 선택
+                        <span class="selection-badge">👵👴</span>
+                    </div>
+                    <select id="age">
+                        <option value="20s">20대</option>
+                        <option value="30s">30대</option>
+                        <option value="40s">40대</option>
+                        <option value="50s">50대</option>
+                        <option value="60s">60대</option>
+                        <option value="70s">70대</option>
+                        <option value="80s">80대</option>
+                        <option value="90s">90대</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="search-section">
+                <button class="search-button" onclick="showOptions()">🔍 검색하기</button>
+            </div>
+
+            <div id="resultContainer" class="dynamic-content"></div>
+        </main>
+    </div>
+
+    <script>
+        const subCategoryMap = {
+            "공연/전시": ["공연관람", "문화서비스", "전시장", "경기관람"],
+            "디저트": ["제과/제빵/떡/케익", "커피/음료"],
+            "생활서비스": ["미용서비스", "세탁/가사서비스", "연료판매", "차량관리/서비스", "보안/운송", "무점포서비스", "사우나/휴게시설", "수리서비스", "렌탈서비스", "교통서비스", "전문서비스", "여행/유학대행", "부동산"],
+            "소매/유통": ["건강/기호식품", "사무/교육용품", "서적/도서", "선물/완구", "스포츠/레져용품", "음/식료품소매", "의복/의류", "인테리어/가정용품", "종합소매점", "차량관리/부품", "악기/공예", "패션잡화", "화장품소매", "차량판매", "가전제품", "유아용품"],
+            "식사": ["고기요리", "닭/오리요리", "별식/퓨전요리", "부페", "분식", "양식", "일식/수산물", "중식", "패스트푸드", "한식", "휴게소/대형업체"],
+            "여가/오락": ["숙박", "일반스포츠", "취미/오락", "요가/단전/마사지"],
+            "의료/건강": ["수의업", "의약/의료품", "일반병원", "특화병원", "종합병원"],
+            "전자상거래": ["인터넷쇼핑", "음식배달서비스"]
+        };
+
+        function showOptions() {
+            const sex = document.getElementById("sex").value;
+            const age = document.getElementById("age").value;
+            const region = document.getElementById("region").value;
+            const resultDiv = document.getElementById("resultContainer");
+
+            resultDiv.innerHTML = ""; 
+
+            let recommendedItems = [];
+
+            if (region === "Gwan" && sex === "M" && age === "20s") {
+        recommendedItems = ["소매/유통", "식사", "생활서비스", "의료/건강", "디저트"];
+      } else if (region === "Gwan" && sex === "F" && age === "20s") {
+        recommendedItems = ["소매/유통", "의료/건강", "식사", "생활서비스", "디저트"];
+      } else if (region === "Gwan" && sex === "M" && age === "30s") {
+        recommendedItems = ["소매/유통", "생활서비스", "식사", "의료/건강", "디저트"];
+      } else if (region === "Gwan" && sex === "F" && age === "30s") {
+        recommendedItems = ["소매/유통", "의료/건강", "식사", "생활서비스", "디저트"];
+      } else if (region === "Gwan" && sex === "M" && age === "40s") {
+        recommendedItems = ["소매/유통", "생활서비스", "식사", "의료/건강", "디저트"];
+      } else if (region === "Gwan" && sex === "F" && age === "40s") {
+        recommendedItems = ["소매/유통", "의료/건강", "생활서비스", "식사", "디저트"];
+      } else if (region === "Gwan" && sex === "M" && age === "50s") {
+        recommendedItems = ["소매/유통", "생활서비스", "식사", "의료/건강", "여가/오락"];
+      } else if (region === "Gwan" && sex === "F" && age === "50s") {
+        recommendedItems = ["소매/유통", "의료/건강", "생활서비스", "식사", "디저트"];
+      } else if (region === "Gwan" && sex === "M" && age === "60s") {
+        recommendedItems = ["소매/유통", "생활서비스", "식사", "의료/건강", "여가/오락"];
+      } else if (region === "Gwan" && sex === "F" && age === "60s") {
+        recommendedItems = ["소매/유통", "의료/건강", "생활서비스", "식사", "디저트"];
+      } else if (region === "Gwan" && sex === "M" && age === "70s") {
+        recommendedItems = ["소매/유통", "생활서비스", "의료/건강", "식사", "디저트"];
+      } else if (region === "Gwan" && sex === "F" && age === "70s") {
+        recommendedItems = ["소매/유통", "의료/건강", "식사", "생활서비스", "디저트"];
+      } else if (region === "Gwan" && sex === "M" && age === "80s") {
+        recommendedItems = ["소매/유통", "의료/건강", "식사", "생활서비스", "디저트"];
+      } else if (region === "Gwan" && sex === "F" && age === "80s") {
+        recommendedItems = ["소매/유통", "의료/건강", "식사", "생활서비스", "디저트"];
+      }
+        else if (region === "Young" && sex === "M" && age === "20s") {
+        recommendedItems = ["소매/유통", "식사", "의료/건강", "생활서비스", "전자상거래"];
+      } else if (region === "Young" && sex === "F" && age === "20s") {
+        recommendedItems = ["소매/유통", "식사", "의료/건강", "전자상거래", "디저트"];
+      } else if (region === "Young" && sex === "M" && age === "30s") {
+        recommendedItems = ["소매/유통", "식사", "의료/건강", "전자상거래", "생활서비스"];
+      } else if (region === "Young" && sex === "F" && age === "30s") {
+        recommendedItems = ["소매/유통", "의료/건강", "식사", "전자상거래", "생활서비스"];
+      } else if (region === "Young" && sex === "M" && age === "40s") {
+        recommendedItems = ["소매/유통", "의료/건강", "식사", "생활서비스", "전자상거래"];
+      } else if (region === "Young" && sex === "F" && age === "40s") {
+        recommendedItems = ["의료/건강", "소매/유통", "식사", "생활서비스", "전자상거래"];
+      } else if (region === "Young" && sex === "M" && age === "50s") {
+        recommendedItems = ["소매/유통", "의료/건강", "식사", "생활서비스", "디저트"];
+      } else if (region === "Young" && sex === "F" && age === "50s") {
+        recommendedItems = ["의료/건강", "소매/유통", "식사", "생활서비스", "전자상거래"];
+      } else if (region === "Young" && sex === "M" && age === "60s") {
+        recommendedItems = ["의료/건강", "소매/유통", "식사", "생활서비스", "전자상거래"];
+      } else if (region === "Young" && sex === "F" && age === "60s") {
+        recommendedItems = ["의료/건강", "소매/유통", "식사", "생활서비스", "전자상거래"];
+      } else if (region === "Young" && sex === "M" && age === "70s") {
+        recommendedItems = ["의료/건강", "소매/유통", "식사", "생활서비스", "전자상거래"];
+      } else if (region === "Young" && sex === "F" && age === "70s") {
+        recommendedItems = ["의료/건강", "소매/유통", "식사", "생활서비스", "디저트"];
+      } else if (region === "Young" && sex === "M" && age === "80s") {
+        recommendedItems = ["의료/건강", "소매/유통", "식사", "생활서비스", "전자상거래"];
+      } else if (region === "Young" && sex === "F" && age === "80s") {
+        recommendedItems = ["의료/건강", "소매/유통", "식사", "생활서비스", "전자상거래"];
+      }
+        else if (region === "Jang" && sex === "M" && age === "20s") {
+        recommendedItems = ["소매/유통", "식사", "생활서비스", "의료/건강", "여가/오락"];
+      } else if (region === "Jang" && sex === "F" && age === "20s") {
+        recommendedItems = ["소매/유통", "생활서비스", "식사", "의료/건강", "디저트"];
+      } else if (region === "Jang" && sex === "M" && age === "30s") {
+        recommendedItems = ["소매/유통", "생활서비스", "식사", "의료/건강", "디저트"];
+      } else if (region === "Jang" && sex === "F" && age === "30s") {
+        recommendedItems = ["소매/유통", "생활서비스", "의료/건강", "식사", "디저트"];
+      } else if (region === "Jang" && sex === "M" && age === "40s") {
+        recommendedItems = ["소매/유통", "생활서비스", "식사", "의료/건강", "디저트"];
+      } else if (region === "Jang" && sex === "F" && age === "40s") {
+        recommendedItems = ["소매/유통", "생활서비스", "의료/건강", "식사", "디저트"];
+      } else if (region === "Jang" && sex === "M" && age === "50s") {
+        recommendedItems = ["소매/유통", "생활서비스", "식사", "의료/건강", "여가/오락"];
+      } else if (region === "Jang" && sex === "F" && age === "50s") {
+        recommendedItems = ["소매/유통", "생활서비스", "의료/건강", "식사", "디저트"];
+      } else if (region === "Jang" && sex === "M" && age === "60s") {
+        recommendedItems = ["소매/유통", "생활서비스", "식사", "의료/건강", "여가/오락"];
+      } else if (region === "Jang" && sex === "F" && age === "60s") {
+        recommendedItems = ["소매/유통", "의료/건강", "식사", "생활서비스", "전자상거래"];
+      } else if (region === "Jang" && sex === "M" && age === "70s") {
+        recommendedItems = ["소매/유통", "의료/건강", "생활서비스", "식사", "여가/오락"];
+      } else if (region === "Jang" && sex === "F" && age === "70s") {
+        recommendedItems = ["소매/유통", "의료/건강", "식사", "생활서비스", "전자상거래"];
+      } else if (region === "Jang" && sex === "M" && age === "80s") {
+        recommendedItems = ["소매/유통", "의료/건강", "식사", "생활서비스", "전자상거래"];
+      } else if (region === "Jang" && sex === "F" && age === "80s") {
+        recommendedItems = ["소매/유통", "의료/건강", "식사", "생활서비스", "디저트"];
+      }
+        else if (region === "Pal" && sex === "M" && age === "20s") {
+        recommendedItems = ["식사", "소매/유통", "의료/건강", "여가/오락", "생활서비스"];
+      } else if (region === "Pal" && sex === "F" && age === "20s") {
+        recommendedItems = ["식사", "소매/유통", "의료/건강", "디저트", "생활서비스"];
+      } else if (region === "Pal" && sex === "M" && age === "30s") {
+        recommendedItems = ["식사", "소매/유통", "의료/건강", "생활서비스", "여가/오락"];
+      } else if (region === "Pal" && sex === "F" && age === "30s") {
+        recommendedItems = ["의료/건강", "식사", "소매/유통", "생활서비스", "디저트"];
+      } else if (region === "Pal" && sex === "M" && age === "40s") {
+        recommendedItems = ["식사", "소매/유통", "의료/건강", "생활서비스", "여가/오락"];
+      } else if (region === "Pal" && sex === "F" && age === "40s") {
+        recommendedItems = ["의료/건강", "소매/유통", "식사", "생활서비스", "디저트"];
+      } else if (region === "Pal" && sex === "M" && age === "50s") {
+        recommendedItems = ["의료/건강", "소매/유통", "식사", "생활서비스", "여가/오락"];
+      } else if (region === "Pal" && sex === "F" && age === "50s") {
+        recommendedItems = ["의료/건강", "소매/유통", "식사", "생활서비스", "디저트"];
+      } else if (region === "Pal" && sex === "M" && age === "60s") {
+        recommendedItems = ["의료/건강", "소매/유통", "식사", "생활서비스", "여가/오락"];
+      } else if (region === "Pal" && sex === "F" && age === "60s") {
+        recommendedItems = ["소매/유통", "의료/건강", "식사", "생활서비스", "디저트"];
+      } else if (region === "Pal" && sex === "M" && age === "70s") {
+        recommendedItems = ["의료/건강", "소매/유통", "식사", "생활서비스", "디저트"];
+      } else if (region === "Pal" && sex === "F" && age === "70s") {
+        recommendedItems = ["의료/건강", "소매/유통", "식사", "생활서비스", "디저트"];
+      } else if (region === "Pal" && sex === "M" && age === "80s") {
+        recommendedItems = ["의료/건강", "소매/유통", "식사", "생활서비스", "디저트"];
+      } else if (region === "Pal" && sex === "F" && age === "80s") {
+        recommendedItems = ["의료/건강", "소매/유통", "식사", "생활서비스", "디저트"];
+      }
+
+            const allItems = ["소매/유통", "생활서비스", "여가/오락", "식사", "디저트", "의료/건강", "공연/전시", "전자상거래"];
+
+            // 추천 업종 출력
+            const recCard = document.createElement("div");
+            recCard.className = "results-card";
+            
+            const recTitle = document.createElement("h3");
+            recTitle.className = "category-title";
+            recTitle.innerHTML = "🎯 추천 업종 선택";
+
+            recCard.appendChild(recTitle);
+
+            const recGroup = document.createElement("div");
+            recGroup.className = "checkbox-group";
+            recGroup.style.gridTemplateColumns = "1fr"
+            recommendedItems.forEach(item => {
+                const label = document.createElement("label");
+                const checkbox = document.createElement("input");
+                checkbox.type = "checkbox";
+                checkbox.name = "recommended";
+                checkbox.value = item;
+                const span = document.createElement("span");
+                span.textContent = item;
+                label.appendChild(checkbox);
+                label.appendChild(span);
+                recGroup.appendChild(label);
+            });
+
+            const selectAllRecLabel = document.createElement("label");
+            const selectAllRec = document.createElement("input");
+            selectAllRec.type = "checkbox";
+            selectAllRec.id = "selectAllRecommendedBottom";
+            const selectAllRecSpan = document.createElement("span");
+            selectAllRecSpan.textContent = "전체 선택";
+
+            selectAllRecLabel.appendChild(selectAllRec);
+            selectAllRecLabel.appendChild(selectAllRecSpan);
+            recGroup.appendChild(selectAllRecLabel);
+
+            // 전체 선택 클릭 → 모든 추천 업종 체크
+            selectAllRec.addEventListener("change", () => {
+                const recBoxes = document.querySelectorAll('input[name="recommended"]');
+                recBoxes.forEach(chk => chk.checked = selectAllRec.checked);
+            });
+
+            // 개별 클릭 → 전체 선택 체크박스 상태 갱신
+            recGroup.addEventListener("change", (e) => {
+                if (e.target.name === "recommended") {
+                    const recBoxes = document.querySelectorAll('input[name="recommended"]');
+                    const allChecked = Array.from(recBoxes).every(chk => chk.checked);
+                    selectAllRec.checked = allChecked;
+                }
+            });
+
+            recCard.appendChild(recGroup);
+            resultDiv.appendChild(recCard);
+
+            // 전체 업종 출력
+            const allCard = document.createElement("div");
+            allCard.className = "results-card";
+            
+            const allTitle = document.createElement("h3");
+            allTitle.className = "category-title";
+            allTitle.innerHTML = "📋 전체 업종 선택";
+
+            allCard.appendChild(allTitle);
+
+            const allGroup = document.createElement("div");
+            allGroup.className = "checkbox-group";
+
+            // ✅ 추천 업종 제외한 전체 업종 만들기
+            const filteredAllItems = allItems.filter(item => !recommendedItems.includes(item));
+
+            filteredAllItems.forEach(item => {
+                const label = document.createElement("label");
+                const checkbox = document.createElement("input");
+                checkbox.type = "checkbox";
+                checkbox.name = "allCategory";
+                checkbox.value = item;
+                const span = document.createElement("span");
+                span.textContent = item;
+                label.appendChild(checkbox);
+                label.appendChild(span);
+                allGroup.appendChild(label);
+            });
+
+            // ✅ 마지막에 전체 선택 체크박스 추가
+            const selectAllAllLabel = document.createElement("label");
+            const selectAllAll = document.createElement("input");
+            selectAllAll.type = "checkbox";
+            selectAllAll.id = "selectAllAllCategoryBottom";
+            const selectAllAllSpan = document.createElement("span");
+            selectAllAllSpan.textContent = "전체 선택";
+
+            selectAllAllLabel.appendChild(selectAllAll);
+            selectAllAllLabel.appendChild(selectAllAllSpan);
+            allGroup.appendChild(selectAllAllLabel);
+
+            // 전체 선택 클릭 → 모든 전체 업종 체크
+            selectAllAll.addEventListener("change", () => {
+                const allBoxes = document.querySelectorAll('input[name="allCategory"]');
+                allBoxes.forEach(chk => chk.checked = selectAllAll.checked);
+            });
+
+            // 개별 클릭 → 전체 선택 체크박스 상태 갱신
+            allGroup.addEventListener("change", (e) => {
+                if (e.target.name === "allCategory") {
+                    const allBoxes = document.querySelectorAll('input[name="allCategory"]');
+                    const allChecked = Array.from(allBoxes).every(chk => chk.checked);
+                    selectAllAll.checked = allChecked;
+                }
+            });
+
+            allCard.appendChild(allGroup);
+            resultDiv.appendChild(allCard);
+
+            // 소분류 출력 함수
+            const showSubCategories = () => {
+            const selectedRecommended = Array.from(document.querySelectorAll('input[name="recommended"]:checked')).map(el => el.value);
+            const selectedAll = Array.from(document.querySelectorAll('input[name="allCategory"]:checked')).map(el => el.value);
+            const selectedSet = new Set([...selectedRecommended, ...selectedAll]);
+
+            // 기존 소분류/카드 결과 제거
+            const existingSubDiv = document.querySelector('.subcategory-container');
+            if (existingSubDiv) existingSubDiv.remove();
+            const existingCardList = document.querySelector(".card-result-container");
+            if (existingCardList) existingCardList.remove();
+
+            if (selectedSet.size === 0) return;
+
+            const subContainer = document.createElement("div");
+            subContainer.className = "results-card subcategory-container";
+
+            const subMainTitle = document.createElement("h3");
+            subMainTitle.className = "category-title";
+            subMainTitle.innerHTML = "🔍 소분류 선택";
+            subContainer.appendChild(subMainTitle);
+
+            selectedSet.forEach(category => {
+                if (!subCategoryMap[category]) return;
+
+                const subGroup = document.createElement("div");
+                subGroup.className = "subcategory-group";
+
+                const groupTitle = document.createElement("div");
+                groupTitle.className = "subcategory-title";
+                groupTitle.textContent = category;
+                subGroup.appendChild(groupTitle);
+
+                const subItems = document.createElement("div");
+                subItems.className = "subcategory-items";
+
+                // 개별 소분류 체크박스들
+                subCategoryMap[category].forEach(sub => {
+                const label = document.createElement("label");
+                const checkbox = document.createElement("input");
+                checkbox.type = "checkbox";
+                checkbox.name = "subcategory";     // 🔹 모든 그룹 공통 name (검색용)
+                checkbox.value = sub;
+                const span = document.createElement("span");
+                span.textContent = sub;
+                label.appendChild(checkbox);
+                label.appendChild(span);
+                subItems.appendChild(label);
+                });
+
+                // ✅ 그룹별 "전체 선택" (마지막에 추가)
+                const selectAllLabel = document.createElement("label");
+                const selectAll = document.createElement("input");
+                selectAll.type = "checkbox";
+                // selectAll.className = "selectAllSub"; // 필요하면 클래스 부여
+                const selectAllSpan = document.createElement("span");
+                selectAllSpan.textContent = "전체 선택";
+                selectAllLabel.appendChild(selectAll);
+                selectAllLabel.appendChild(selectAllSpan);
+                subItems.appendChild(selectAllLabel);
+
+                // ▶ 전체 선택 클릭 → 이 그룹의 소분류 전부 토글
+                selectAll.addEventListener("change", () => {
+                const boxes = subItems.querySelectorAll('input[name="subcategory"]');
+                boxes.forEach(chk => chk.checked = selectAll.checked);
+                });
+
+                // ▶ 개별 소분류 클릭 → 이 그룹의 전체 선택 상태 갱신
+                subItems.addEventListener("change", (e) => {
+                if (e.target && e.target.name === "subcategory") {
+                    const boxes = subItems.querySelectorAll('input[name="subcategory"]');
+                    const allChecked = Array.from(boxes).every(chk => chk.checked);
+                    selectAll.checked = allChecked;
+                }
+                });
+
+                subGroup.appendChild(subItems);
+                subContainer.appendChild(subGroup);
+            });
+
+            // 카드 검색 버튼
+            const cardBtnContainer = document.createElement("div");
+            cardBtnContainer.style.textAlign = "center";
+            cardBtnContainer.style.marginTop = "1.5rem";
+
+            const oldBtn = document.getElementById("cardSearchBtn");
+            if (oldBtn) oldBtn.remove();
+
+            const cardBtn = document.createElement("button");
+            cardBtn.id = "cardSearchBtn";
+            cardBtn.className = "action-button";
+            cardBtn.style.background = "linear-gradient(135deg, #ff7e5f, #feb47b)";
+            cardBtn.textContent = "💳 카드 검색";
+            cardBtn.addEventListener("click", () => {
+                console.log("💳 카드 검색 버튼 클릭됨");
+                searchCards();
+            });
+
+            cardBtnContainer.appendChild(cardBtn);
+            subContainer.appendChild(cardBtnContainer);
+            resultDiv.appendChild(subContainer);
+            };
+
+
+            // 버튼 추가
+            const buttonContainer = document.createElement("div");
+            buttonContainer.style.textAlign = "center";
+            buttonContainer.style.marginTop = "2rem";
+            
+            const subBtn = document.createElement("button");
+            subBtn.className = "action-button";
+            subBtn.innerHTML = "🔍 소분류 검색";
+            subBtn.onclick = showSubCategories;
+            buttonContainer.appendChild(subBtn);
+            resultDiv.appendChild(buttonContainer);
+
+        }
+
+        // 파티클 생성 함수
+        function createParticle() {
+            const particle = document.createElement('div');
+            particle.className = 'particle';
+            particle.style.width = Math.random() * 10 + 4 + 'px';
+            particle.style.height = particle.style.width;
+            particle.style.left = Math.random() * 100 + '%';
+            particle.style.top = Math.random() * 100 + '%';
+            particle.style.animationDelay = Math.random() * 6 + 's';
+            document.body.appendChild(particle);
+
+            setTimeout(() => {
+                particle.remove();
+            }, 6000);
+        }
+
+        // 주기적으로 파티클 생성
+        setInterval(createParticle, 3000);
+
+        const csvUrl = "https://raw.githubusercontent.com/SUNH4/Outlier_Flow/main/final_web.csv";
+
+        // 안전한 CSV 파싱 + 헤더 자동 매핑
+        async function fetchCardData() {
+          console.log("fetchCardData() 실행됨");
+            const response = await fetch(csvUrl);
+            const data = await response.text();
+
+            const lines = data.split(/\r?\n/).filter(line => line.trim() !== "");
+            let headers = lines[0].split(",").map(h => h.trim());
+            console.log("=== CSV Headers ===", headers); // ✅ 실제 CSV 헤더 확인
+
+            
+            // === CSV 헤더 매핑 강화 ===
+            function normalizeHeaderName(name) {
+                return String(name || "")
+                    .trim()
+                    .replace(/\s+/g, "")        // 모든 공백 제거
+                    .replace(/\u00A0/g, "")     // non-breaking space 제거
+                    .replace(/[“”"']/g, "")     // 따옴표 제거
+                    .replace(/[\//]/g, "/")    // 슬래시 통일
+                    .toLowerCase();
+            }
+
+            const normalizedHeaders = headers.map(h => normalizeHeaderName(h));
+
+            // 특정 이름 후보 중 하나라도 맞으면 인덱스 반환
+            function findHeaderIndex(possibleNames) {
+                for (let name of possibleNames) {
+                    const idx = normalizedHeaders.indexOf(normalizeHeaderName(name));
+                    if (idx !== -1) return idx;
+                }
+                return -1;
+            }
+
+            const headerMap = {
+                cardName: findHeaderIndex(["카드명", "카드이름", "cardname"]),
+                bigTag: findHeaderIndex(["대분류태그", "대분류", "bigcategory"]),
+                smallTag: findHeaderIndex(["소분류태그", "소분류", "subcategory"]),
+                imageUrl: findHeaderIndex(["이미지url", "이미지URL", "이미지"]),
+                type: findHeaderIndex(["체크/신용", "카드종류", "type"]),
+                detailLink: findHeaderIndex(["카드디테일링크", "세부링크", "상세링크", "detailurl"])
+            };
+
+            console.log("=== CSV Headers ===", headers);
+            console.log("=== 헤더 매핑 인덱스 ===", headerMap);
+
+
+
+
+            console.log("=== 헤더 매핑 인덱스 ===", headerMap);
+
+            const rows = lines.slice(1);
+
+            const cards = rows.map(row => {
+                const cols = row.match(/(".*?"|[^",]+)(?=\s*,|\s*$)/g) || [];
+
+                return {
+                    "카드명": (cols[headerMap.cardName] || "").replace(/^"|"$/g, "").trim(),
+                    "대분류태그": (cols[headerMap.bigTag] || "").replace(/^"|"$/g, "").trim(),
+                    "소분류태그": (cols[headerMap.smallTag] || "").replace(/^"|"$/g, "").trim(),
+                    "이미지 URL": (cols[headerMap.imageUrl] || "").replace(/^"|"$/g, "").trim(),
+                    "체크/신용": (cols[headerMap.type] || "").replace(/^"|"$/g, "").trim(),
+                    "카드 디테일 링크": (cols[headerMap.detailLink] || "").replace(/^"|"$/g, "").trim()
+                };
+            });
+
+            return cards;
+
+            console.log("fetchCardData() 실행됨");
+        }
+
+
+        // 태그 문자열 정규화
+        function normalizeTag(tag) {
+            return String(tag || "")
+                .trim()
+                .replace(/\s+/g, "")          // 공백 제거
+                .replace(/\u00A0/g, "")       // non-breaking space 제거
+                .replace(/[\/／]+/g, "/")     // 슬래시/전각슬래시 통일
+                .replace(/-/g, "")            // 하이픈 제거
+                .toLowerCase();
+        }
+
+        // CSV 태그 필드 파싱
+        function parseTagFieldToArray(raw) {
+            if (!raw || typeof raw !== "string") return [];
+            const s = raw.trim();
+
+            try {
+                return JSON.parse(s.replace(/'/g, '"')).map(x => normalizeTag(x));
+            } catch {
+                return s
+                    .replace(/[\[\]]/g, '')   // 대괄호 제거
+                    .split(/,|;/)             // 콤마나 세미콜론 기준 분리
+                    .map(x => normalizeTag(x))
+                    .filter(Boolean);
+            }
+        }
+
+        /* ==== 전역 변수 ==== */
+      let currentIndex = 0;
+      const cardsPerPage = 10;
+      let filteredCards = [];
+
+      /* ==== 카드 10개씩 추가 출력 ==== */
+      function showNextCards(grid) {
+          const nextCards = filteredCards.slice(currentIndex, currentIndex + cardsPerPage);
+          nextCards.forEach(card => {
+              const item = document.createElement("div");
+              item.style.display = "flex";                // ✅ 가로 배치
+              item.style.alignItems = "flex-start";       // 위쪽 정렬
+              item.style.border = "1px solid #ddd";
+              item.style.borderRadius = "10px";
+              item.style.padding = "1rem";
+              item.style.background = "#fff";
+              item.style.boxShadow = "0 4px 8px rgba(0,0,0,0.05)";
+              item.style.gap = "1rem"; 
+
+              // 이미지 영역
+              const img = document.createElement("img");
+              img.src = card["이미지 URL"];
+              img.alt = card["카드명"];
+              img.style.width = "100px";
+              img.style.height = "auto";
+              img.style.flexShrink = "0"; // 크기 줄어들지 않게
+
+              // 텍스트 영역
+              const textBox = document.createElement("div");
+              textBox.style.display = "flex";
+              textBox.style.flexDirection = "column";
+              textBox.style.gap = "0.3rem";
+
+              const name = document.createElement("h4");
+              name.textContent = card["카드명"];
+              name.style.fontSize = "1rem";
+              name.style.margin = "0";
+
+              const type = document.createElement("p");
+              type.textContent = card["체크/신용"];
+              type.style.fontSize = "0.9rem";
+              type.style.color = "#666";
+
+              const bigTagElement = document.createElement("p");
+              bigTagElement.textContent = "대분류: " + parseTagFieldToArray(card["대분류태그"]).join(", ");
+              bigTagElement.style.fontSize = "0.8rem";
+              bigTagElement.style.color = "#444";
+
+              const smallTagElement = document.createElement("p");
+              smallTagElement.textContent = "소분류: " + parseTagFieldToArray(card["소분류태그"]).join(", ");
+              smallTagElement.style.fontSize = "0.8rem";
+              smallTagElement.style.color = "#444";
+
+              const link = document.createElement("a");
+              link.href = card["카드 디테일 링크"];
+              link.target = "_blank";
+              link.textContent = "자세히 보기";
+              link.className = "card-detail-btn";
+
+              // 텍스트 박스에 정보 추가
+              textBox.append(name, type, bigTagElement, smallTagElement, link);
+
+              // item에 이미지와 텍스트 박스 추가
+              item.append(img, textBox);
+              grid.appendChild(item); // ✅ 카드 요소를 grid에 추가
+
+          });
+          currentIndex += cardsPerPage;
+      }
+
+      /* ==== 메인 카드 검색 ==== */
+      async function searchCards() {
+          console.log("✅ searchCards 실행됨");
+
+          const selectedRecommendedCategories = Array.from(document.querySelectorAll('input[name="recommended"]:checked'))
+              .map(el => normalizeTag(el.value));
+          const selectedAllCategories = Array.from(document.querySelectorAll('input[name="allCategory"]:checked'))
+              .map(el => normalizeTag(el.value));
+          const selectedSubcategories = Array.from(document.querySelectorAll('input[name="subcategory"]:checked'))
+              .map(el => normalizeTag(el.value));
+
+          const selectedBigSet = new Set([...selectedRecommendedCategories, ...selectedAllCategories]);
+
+          const cards = await fetchCardData();
+
+          filteredCards = cards.filter(card => {
+              const bigTags = parseTagFieldToArray(card["대분류태그"]);
+              const subTags = parseTagFieldToArray(card["소분류태그"]);
+              const bigMatch = bigTags.some(tag => selectedBigSet.has(tag));
+              const subMatch = selectedSubcategories.length > 0
+                  ? subTags.some(tag => selectedSubcategories.includes(tag))
+                  : true;
+              return bigMatch && subMatch;
+          });
+
+          const resultDiv = document.getElementById("resultContainer");
+          const existingCardList = document.querySelector(".card-result-container");
+          if (existingCardList) existingCardList.remove();
+
+          const cardContainer = document.createElement("div");
+          cardContainer.className = "results-card card-result-container";
+
+          const title = document.createElement("h3");
+          title.className = "category-title";
+          title.textContent = "💳 추천 카드 목록";
+          cardContainer.appendChild(title);
+
+          if (filteredCards.length === 0) {
+              cardContainer.innerHTML += "<p>조건에 맞는 카드가 없습니다.</p>";
+          } else {
+              const grid = document.createElement("div");
+              grid.style.display = "grid";
+              grid.style.gridTemplateColumns = "1fr";
+              grid.style.gap = "1rem";
+
+              currentIndex = 0;
+              showNextCards(grid);
+
+              cardContainer.appendChild(grid); // ✅ 카드 목록 먼저 추가
+
+              if (filteredCards.length > cardsPerPage) {
+                  const loadMoreBtn = document.createElement("button");
+                  loadMoreBtn.textContent = "더보기";
+                  loadMoreBtn.className = "action-button";
+
+                  loadMoreBtn.style.background = "linear-gradient(135deg, #667eea 0%, #764ba2 100%)";
+                  loadMoreBtn.style.boxShadow = "0 4px 15px rgba(102, 126, 234, 0.3)";
+                  
+                  // ✅ 중앙 정렬
+                  loadMoreBtn.style.display = "block";
+                  loadMoreBtn.style.width = "fit-content";
+                  loadMoreBtn.style.margin = "1rem auto 0";
+
+                  loadMoreBtn.onclick = () => {
+                      showNextCards(grid);
+                      if (currentIndex >= filteredCards.length) {
+                          loadMoreBtn.remove();
+                      }
+                  };
+                  cardContainer.appendChild(loadMoreBtn); // ✅ 버튼은 카드 목록 밑에 추가
+              }
+          }
+
+          resultDiv.appendChild(cardContainer);
+      }
+
+    </script>
+
+</body>
+</html>
